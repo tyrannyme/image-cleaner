@@ -1,0 +1,16 @@
+/.tools/
+/.agents/
+/in/**
+!/in/.gitkeep
+/out/**
+!/out/.gitkeep
+
+# Local images from the initial experiments.
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+
+__pycache__/
+*.py[cod]
+.DS_Store
