@@ -5,54 +5,66 @@
 ![Local processing](https://shieldcn.dev/badge/processing-local-blue.svg)
 ![NVIDIA CUDA](https://shieldcn.dev/badge/GPU-NVIDIA%20CUDA-green.svg)
 
-A local image-cleaning tool by [Tyranny](https://github.com/tyrannyme). Batch-process images from `in/` into `out/` with conservative CtrlRegen settings: **strength 0.25, 50 steps**.
+Clean a folder of images on your own GPU. Put images in `in/`, run one command, get results in `out/`.
 
-Uses [watermarks-remover](https://github.com/guillaumemeyer/watermarks-remover) and its [noai-watermark](https://github.com/mertizci/noai-watermark) backend at pinned commits. Images are processed locally. There is no HTTP server, background daemon, or global configuration change.
+Made by [Tyranny](https://github.com/tyrannyme).
 
-## Setup
-
-Requires Linux, Bash, Git, Python **3.11** with `venv`/`pip`, and an NVIDIA GPU with a driver compatible with CUDA 12.8. The tested machine has a 16 GB RTX 4070 Ti SUPER. Allow roughly 25 GB of free disk space for dependencies, model weights, and installation temporary files.
+## Quick start
 
 ```bash
 git clone https://github.com/tyrannyme/image-cleaner.git
 cd image-cleaner
-./setup.sh
+./setup.sh      # once
+./run.sh        # every time you have new images in in/
 ```
 
-If Python 3.11 has a different executable path:
+## Requirements
+
+- Linux with Bash and Git
+- Python 3.11 with `venv` and `pip`
+- NVIDIA GPU with a driver that supports CUDA 12.8 (no CUDA toolkit needed)
+- About 25 GB of free disk space
+
+Tested on an RTX 4070 Ti SUPER (16 GB).
+
+If Python 3.11 is not on your `PATH` as `python3.11`:
 
 ```bash
 PYTHON=/path/to/python3.11 ./setup.sh
 ```
 
-Setup installs PyTorch and the backend dependencies in `.tools/noai-watermark/.venv/`. Re-running setup reuses the installation. All downloads, caches, and temporary files stay under `.tools/`; model weights download on the first processing run and are reused afterward. No separate CUDA toolkit installation is needed.
+## How it works
 
-## Run
+- Runs CtrlRegen at **strength 0.25, 50 steps**, a deliberately gentle setting.
+- Uses [watermarks-remover](https://github.com/guillaumemeyer/watermarks-remover) and [noai-watermark](https://github.com/mertizci/noai-watermark), pinned to fixed commits.
+- Everything stays in this folder. Dependencies, model weights, caches, and temp files go in `.tools/`.
+- Nothing runs in the background. No server, no daemon, no global config changes.
+- Model weights download on the first run and are reused after that.
 
-Place images in `in/`, then run:
+## Input and output
 
-```bash
-./run.sh
-```
-
-Scripts work from any current directory. Input subfolders are preserved:
+Folders are mirrored. Outputs are always PNG:
 
 ```text
 in/portrait.png       -> out/portrait.png
 in/album/photo.jpg    -> out/album/photo.jpg.png
 ```
 
-- Originals stay untouched. Outputs are PNGs at the original dimensions.
-- Existing outputs are skipped. Delete an output to process that input again.
-- If two inputs would map to the same output name, the batch stops before processing and asks you to rename one.
-- PNG, JPEG, WebP, AVIF, HEIC/HEIF, BMP, GIF, and TIFF extensions are discovered, case-insensitively. Decoding depends on the installed Pillow codecs; unsupported codecs produce a reported failure. Animated or multipage images produce a single still image. Transparency is flattened by the RGB regeneration backend.
-- Failed files are reported and the batch continues. The command exits with status `1` if any file fails; failed processing never publishes a metadata-only copy as a successful output.
-- `in/`, `out/`, `.tools/`, and the initial experiment PNGs are ignored by Git.
+- **Originals are never changed.** Outputs keep the original dimensions.
+- **Already-processed files are skipped.** Delete an output to redo it.
+- **Supported formats:** PNG, JPEG, WebP, AVIF, HEIC/HEIF, BMP, GIF, TIFF. Some need extra Pillow codecs; if one is missing, that file fails and is reported.
+- **Animated or multipage files** become a single still image.
+- **Transparency** is lost; outputs are flattened to RGB.
+- **Name clashes:** if two inputs would produce the same output name, nothing runs until you rename one.
+- **Failures:** a failed file is reported and the batch continues. The command exits with `1` if any file failed. A failed file never produces an output.
 
-## What the result means
+`in/`, `out/`, and `.tools/` are ignored by Git.
 
-The conservative pass passed the real detector for our test image. This is one verified example, not a guarantee for every input. Regeneration can change fine details and colors; inspect outputs before using them.
+## Limits
 
-The unofficial local spectral scorer still flagged that successful output, so these scripts do not install or run it. The batch reports processing success, not a verified watermark verdict. Verify outputs with the real detector when that distinction matters.
-
-Randomness follows the backend default, as in the successful pass, so repeat runs can differ. Raising strength to 0.5 produced severe artifacts in our test and is deliberately not exposed as a default option.
+- **Not guaranteed.** Our test image passed the real detector after processing. That is one example, not a promise for every image.
+- **"Done" does not mean "verified."** The script only reports whether processing succeeded. Check important outputs with the real detector.
+- **No local score.** A local spectral scorer still flagged our successful output, so it is not included.
+- **Details can shift.** Fine detail and colors may change. Look at your outputs before using them.
+- **Results vary between runs** because the backend uses random seeds.
+- **Strength stays at 0.25.** Strength 0.5 caused severe artifacts in testing, so it is not offered.
