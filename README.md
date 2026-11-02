@@ -1,6 +1,6 @@
 # image-cleaner
 
-![image-cleaner: 100% SynthID detected before, 0% SynthID detected after](docs/banner.png)
+![image-cleaner: 100% SynthID detected before, 0% SynthID detected after](.github/banner.png)
 
 ![Local processing](https://shieldcn.dev/badge/processing-local-blue.svg)
 ![NVIDIA CUDA](https://shieldcn.dev/badge/GPU-NVIDIA%20CUDA-green.svg)
